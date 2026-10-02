@@ -1,0 +1,15 @@
+// lib/transliterate.js
+export function hasDevanagari(text) {
+  if (!text || typeof text !== 'string') return false;
+  return /[\u0900-\u097F]/.test(text);
+}
+
+export function devanagariToHinglish(text) {
+  if (!text || typeof text !== 'string') return '';
+  return text;
+}
+
+export function transliterateTranscript(transcript) {
+  if (!Array.isArray(transcript)) return [];
+  return transcript.map((seg) => ({ ...seg, text: devanagariToHinglish(seg.text || '') }));
+}

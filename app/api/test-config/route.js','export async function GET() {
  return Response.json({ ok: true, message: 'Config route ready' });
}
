@@ -1,0 +1,7 @@
+app/api/project/[id]/route.js','export async function GET() {
+  return Response.json({ project: { _id: 'demo_project', title: 'Demo Project' } });
+}
+
+export async function DELETE() {
+  return Response.json({ ok: true });
+}

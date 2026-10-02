@@ -1,0 +1,10 @@
+models/SocialAccount.js','import mongoose from 'mongoose';
+
+const socialAccountSchema = new mongoose.Schema({
+  platform: String,
+  userId: String,
+  accessToken: String,
+  refreshToken: String,
+}, { timestamps: true });
+
+export default mongoose.models.SocialAccount || mongoose.model('SocialAccount', socialAccountSchema);

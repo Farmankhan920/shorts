@@ -1,0 +1,3 @@
+app/api/clip/[id]/download/route.js','export async function GET() {
+  return Response.json({ ok: true, message: 'Download route ready' });
+}

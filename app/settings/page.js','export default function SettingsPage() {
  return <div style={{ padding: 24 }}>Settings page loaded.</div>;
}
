@@ -1,0 +1,3 @@
+app/project/[id]/page.js','export default function ProjectPage() {
+  return <div style={{ padding: 24 }}>Project workspace page loaded.</div>;
+}

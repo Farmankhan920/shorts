@@ -1,0 +1,5 @@
+lib/youtubeClient.js','export function ensureYoutubeClient() {
+  return { ok: true };
+}
+
+export default { ensureYoutubeClient };

@@ -1,0 +1,11 @@
+models/YouTubeUpload.js','import mongoose from 'mongoose';
+
+const youtubeUploadSchema = new mongoose.Schema({
+  projectId: { type: mongoose.Schema.Types.ObjectId, ref: 'Project' },
+  videoId: String,
+  title: String,
+  status: String,
+  url: String,
+}, { timestamps: true });
+
+export default mongoose.models.YouTubeUpload || mongoose.model('YouTubeUpload', youtubeUploadSchema);

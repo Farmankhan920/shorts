@@ -1,0 +1,3 @@
+app/api/youtube/auth/route.js','export async function GET() {
+  return Response.json({ ok: true, message: 'YouTube auth route ready' });
+}

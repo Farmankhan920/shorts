@@ -1,0 +1,13 @@
+models/Clip.js','import mongoose from 'mongoose';
+
+const clipSchema = new mongoose.Schema({
+  projectId: { type: mongoose.Schema.Types.ObjectId, ref: 'Project' },
+  title: String,
+  start: Number,
+  end: Number,
+  score: Number,
+  transcript: [Object],
+  status: String,
+}, { timestamps: true });
+
+export default mongoose.models.Clip || mongoose.model('Clip', clipSchema);

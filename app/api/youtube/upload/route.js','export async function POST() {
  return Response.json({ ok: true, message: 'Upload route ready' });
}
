@@ -1,0 +1,3 @@
+app/api/youtube/status/route.js','export async function GET() {
+  return Response.json({ connected: false });
+}

@@ -1,0 +1,192 @@
+'use client';
+
+import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
+import Link from 'next/link';
+import DashboardLayout from '@/components/DashboardLayout';
+import { fetchWithSettings, getStoredSettings } from '@/lib/settings';
+
+export default function HomePage() {
+  const router = useRouter();
+  const [url, setUrl] = useState('');
+  const [clipCount, setClipCount] = useState(5);
+  const [isLoading, setIsLoading] = useState(false);
+  const [statusText, setStatusText] = useState('');
+  const [projects, setProjects] = useState([]);
+  const [isFetchingProjects, setIsFetchingProjects] = useState(true);
+  const [error, setError] = useState('');
+  const [settings, setSettings] = useState(null);
+
+  useEffect(() => {
+    setSettings(getStoredSettings());
+    async function fetchProjects() {
+      try {
+        const res = await fetchWithSettings('/api/project');
+        if (!res.ok) throw new Error('Failed to fetch projects');
+        const data = await res.json();
+        setProjects(data.projects || []);
+      } catch (err) {
+        console.error('Error loading projects:', err);
+      } finally {
+        setIsFetchingProjects(false);
+      }
+    }
+    fetchProjects();
+    const handleSettingsUpdate = (e) => setSettings(e.detail);
+    window.addEventListener('shorts_settings_updated', handleSettingsUpdate);
+    return () => window.removeEventListener('shorts_settings_updated', handleSettingsUpdate);
+  }, []);
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    if (!url.trim()) return;
+
+    setIsLoading(true);
+    setError('');
+    setStatusText('Analyzing YouTube URL...');
+
+    try {
+      const res = await fetchWithSettings('/api/project', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ url, clipCount: Math.min(20, Math.max(1, clipCount)) }),
+      });
+
+      if (!res.ok) {
+        const errData = await res.json();
+        throw new Error(errData.error || 'Failed to process video');
+      }
+
+      const data = await res.json();
+      setStatusText('Workspace ready! Redirecting...');
+      setTimeout(() => router.push(`/project/${data.project._id}`), 400);
+    } catch (err) {
+      setError(err.message || 'An error occurred during analysis');
+      setIsLoading(false);
+    }
+  };
+
+  const formatDuration = (secs) => {
+    if (!secs) return '0:00';
+    const mins = Math.floor(secs / 60);
+    const hours = Math.floor(mins / 60);
+    const rMins = mins % 60;
+    const rSecs = secs % 60;
+    if (hours > 0) return `${hours}:${rMins.toString().padStart(2, '0')}:${rSecs.toString().padStart(2, '0')}`;
+    return `${mins}:${rSecs.toString().padStart(2, '0')}`;
+  };
+
+  const currentProvider = settings?.aiProvider || 'mistral';
+  const providerDisplay = {
+    mistral: 'Mistral AI',
+    gemini: 'Google Gemini',
+    openai: 'OpenAI GPT',
+    groq: 'Groq LPU',
+  };
+
+  return (
+    <DashboardLayout>
+      <div className="flex-1 flex flex-col justify-between">
+        <main className="max-w-5xl w-full mx-auto px-4 sm:px-6 py-8 sm:py-12 flex flex-col items-center">
+          <div className="text-center mb-8 max-w-2xl">
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-[10px] border border-[#731111] bg-[#360c0c] text-[#fcf2f2] text-xs font-semibold uppercase tracking-wider mb-3">
+              <span className="w-2 h-2 rounded-full bg-[#dd2222]" />
+              Powered by {providerDisplay[currentProvider]} Engine
+            </div>
+            <h1 className="text-3xl sm:text-5xl font-extrabold tracking-tight mb-3 text-white">
+              Create Viral <span className="text-[#dd2222]">Shorts</span> in Seconds
+            </h1>
+            <p className="text-[#b9c0ca] text-sm sm:text-base font-normal leading-relaxed">
+              Paste any long-form YouTube video URL. clip.studio analyzes the transcript, extracts viral scenes, and prepares the workspace for rendering.
+            </p>
+          </div>
+
+          <div className="w-full max-w-2xl app-panel p-5 sm:p-7 mb-12">
+            <form onSubmit={handleSubmit} className="space-y-4">
+              <div className="relative">
+                <input
+                  type="url"
+                  required
+                  disabled={isLoading}
+                  placeholder="Paste YouTube Video URL"
+                  value={url}
+                  onChange={(e) => setUrl(e.target.value)}
+                  className="w-full px-4 py-3.5 app-input text-sm font-normal"
+                />
+              </div>
+              <div className="p-3.5 rounded-[10px] bg-[#1d2125] border border-[#39414b] space-y-2.5">
+                <div className="flex items-center justify-between">
+                  <label className="text-xs font-semibold text-white">Clips to Generate (Max: 20)</label>
+                  <div className="text-xs font-bold text-[#dd2222] font-mono px-2 py-0.5 rounded bg-[#360c0c] border border-[#731111]">
+                    {clipCount} {clipCount === 1 ? 'Clip' : 'Clips'}
+                  </div>
+                </div>
+                <input
+                  type="range"
+                  min="1"
+                  max="20"
+                  step="1"
+                  disabled={isLoading}
+                  value={clipCount}
+                  onChange={(e) => setClipCount(parseInt(e.target.value, 10))}
+                  className="w-full accent-[#dd2222] cursor-pointer"
+                />
+              </div>
+              {error && (
+                <div className="flex items-center gap-2.5 px-3.5 py-2.5 bg-[#ef4444]/15 border border-[#ef4444]/30 text-[#fcf2f2] rounded-[10px] text-xs font-medium">
+                  <span>{error}</span>
+                </div>
+              )}
+              <button type="submit" disabled={isLoading || !url.trim()} className="w-full py-3.5 btn-primary text-sm flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50">
+                {isLoading ? <span>{statusText}</span> : <span>Generate Viral Shorts</span>}
+              </button>
+              <div className="flex flex-wrap items-center justify-between text-xs text-[#909cac] pt-2 px-1 border-t border-[#39414b]">
+                <span>Engine: {providerDisplay[currentProvider]}</span>
+                <Link href="/settings" className="text-[#2cb7d3] hover:underline font-medium">Settings & Keys →</Link>
+              </div>
+            </form>
+          </div>
+
+          <div className="w-full">
+            <div className="flex items-center justify-between mb-4 pb-2 border-b border-[#39414b]">
+              <h2 className="text-lg font-bold text-white">Recent Workspaces</h2>
+              <Link href="/workspaces" className="text-xs text-[#2cb7d3] hover:underline font-semibold">View All ({projects.length})</Link>
+            </div>
+            {isFetchingProjects ? (
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                {[1,2,3].map((n) => <div key={n} className="app-card h-[220px] p-3" />)}
+              </div>
+            ) : projects.length === 0 ? (
+              <div className="app-panel p-8 text-center max-w-md mx-auto">
+                <h3 className="text-sm font-semibold text-white mb-1">No workspaces yet</h3>
+                <p className="text-[#909cac] text-xs">Paste a YouTube link above to initialize your first workspace.</p>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                {projects.slice(0, 3).map((project) => (
+                  <div key={project._id} className="app-card overflow-hidden flex flex-col justify-between group relative">
+                    <div className="relative aspect-video w-full overflow-hidden bg-black/40">
+                      <img src={project.thumbnail} alt={project.title} className="object-cover w-full h-full" />
+                      <div className="absolute bottom-2 right-2 px-2 py-0.5 rounded-[10px] bg-[#1d2125]/90 text-white text-[10px] font-bold font-mono border border-[#39414b]">
+                        {formatDuration(project.duration)}
+                      </div>
+                    </div>
+                    <div className="p-4 flex-grow flex flex-col justify-between space-y-3">
+                      <div>
+                        <h3 className="text-white font-semibold text-sm line-clamp-2 leading-snug mb-1">{project.title}</h3>
+                        <p className="text-[#909cac] text-xs truncate">{project.channel}</p>
+                      </div>
+                      <button onClick={() => router.push(`/project/${project._id}`)} className="w-full py-2.5 btn-secondary text-xs flex items-center justify-center gap-1 cursor-pointer">
+                        Open Workspace
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </main>
+      </div>
+    </DashboardLayout>
+  );
+}

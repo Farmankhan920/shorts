@@ -1,0 +1,9 @@
+lib/video.js','export function buildVideoMetadata(video) {
+  return {
+    title: video?.title || 'Untitled video',
+    duration: video?.duration || 0,
+    thumbnail: video?.thumbnail || '/logo.png',
+  };
+}
+
+export default { buildVideoMetadata };

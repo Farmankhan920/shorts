@@ -1,0 +1,3 @@
+app/workspaces/page.js','export default function WorkspacesPage() {
+  return <div style={{ padding: 24 }}>Workspaces page loaded.</div>;
+}

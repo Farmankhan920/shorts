@@ -1,0 +1,3 @@
+app/api/youtube/uploads/route.js','export async function GET() {
+  return Response.json({ uploads: [] });
+}

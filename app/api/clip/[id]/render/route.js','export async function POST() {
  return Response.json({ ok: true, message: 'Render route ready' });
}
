@@ -1,0 +1,3 @@
+app/api/clip/[id]/preview/route.js','export async function GET() {
+  return Response.json({ ok: true, preview: '/logo.png' });
+}
